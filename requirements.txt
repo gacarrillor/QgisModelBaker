@@ -2,4 +2,4 @@ psycopg2==2.7.4
 nose2
 pyyaml
 future
-transifex-client
+qgis-plugin-ci

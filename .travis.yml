@@ -1,18 +1,15 @@
 language: python
 python:
-  - 3.5
-
-git:
-  submodules: false
+  - 3.7
 
 before_install:
   - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
   - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
   - sudo apt-get update
   - sudo apt-get -y install docker-ce
-  - git submodule update --init --recursive
 
 install:
+  - pip install -r requirements.txt
   - docker build --build-arg QGIS_TEST_VERSION=${QGIS_TEST_VERSION} -f .docker/Dockerfile .
 
 jobs:
@@ -28,15 +25,17 @@ jobs:
 
     - stage: deploy
       if: tag IS present
-      install:
-        - pip install -r requirements.txt
-      script: plugin_ci/release/release.sh
+      script:
+        - >
+         qgis-plugin-ci release ${TRAVIS_TAG}
+         --transifex-token ${TX_TOKEN}
+         --github-token ${GH_TOKEN}
+         --osgeo-username ${OSGEO_USERNAME}
+         --osgeo-password ${OSGEO_PASSWORD}
+
     - stage: deploy
       if: branch = master
-      install:
-        - sudo apt-get install -y pyqt5-dev-tools
-        - pip install -r requirements.txt
-      script: scripts/ci/update-translations.sh
+      script: qgis-plugin-ci push-translation ${TX_TOKEN}
 
 env:
   global:
@@ -48,6 +47,5 @@ env:
     # GH_TOKEN <- personal access token for github to deploy on "releases"
     # https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/
     #   -- defined in travis-ci settings --
-    
     # TX_TOKEN
     - secure: "vlu90dLbfch4AqhCXPqTzF0aOpEcOr+hC4/2Kfh1yPaOrMtxZCIJJMj1/YcnYWYcZjY1QJirQKX47u4RIlQV0z0Q6HxZmosAhZBHuZk8Y6G2UBZiKeoXjKzKVhA2HwUCxzwjFC3MxoPWR7GLyWysQOdczLImCzmCcj7DY5gr7vj4BSX3W3EZhGvIMExEX9YY+qmKOeYCLTyLi3U1iWQWYxFzyIocSqrATzHsZ/SNmTbpsRH5iavqSGLN8ffld48c0nt3QbgLHATfwr6oCRQiwyjlzp8NVxiyP0GYawydnDMGbAwdokhKz4pgsbPtiTPiQ8ifCkG+IGZxypowK4TbDgi+TaV8zFSdXSOR2UU6l6+upAeRHHT+JIveEto1bRrbNUmgPGnhuHxNvpdyn2HeCIYVQYUuP5OV6Pv88sur79AyfLBIpZwHleTQl+pJrBPNJelluwnspK6j/OOGLzhsDiATd84WIw/DxNMYyYLBt9F7qOef6i3yvC9KGx2o5Dig0TaAN9EeHJ1cMiPBTIv4DVFY+MjZnuCozfhkiMVZNMxIFMpyU09PrN5tCi6h+BKV2/3K2PBR1PBAlzRyDdpJqzcm4weEijzWkgTsApws+0jwKqRcZSNU7VfjI1UpPA+M+HPxS+lX6V2alJfUwtkzitau9CCqLJMXPjeleIpXLqM="
